@@ -17,8 +17,7 @@ func (h *HTTPServer) Start() error {
 		fmt.Fprintln(w, "Load Balancer HTTP Server Running!")
 	})
 
-	mux.HandleFunc("/services", services.ServicesListHandler)
-	mux.HandleFunc("/services/", services.ServiceHandler)
+	services.RegisterServiceRoutes(mux)
 
 	return http.ListenAndServe(h.Addr, mux)
 }
