@@ -1,15 +1,14 @@
 package main
 
-
 import (
-	"log"
-	"load_balancer/internal/server"
 	"load_balancer/internal/config"
+	"load_balancer/internal/server"
+	"log"
 )
 
 func main() {
 	cfg := config.LoadConfig()
-	srv := &server.TCPServer{Addr: cfg.Addr}
+	var srv server.Server = &server.HTTPServer{Addr: cfg.Addr}
 	if err := srv.Start(); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}

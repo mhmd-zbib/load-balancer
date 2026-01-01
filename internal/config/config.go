@@ -1,17 +1,40 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
-// Config holds server configuration.
 type Config struct {
-	Addr string
+	Addr           string
+	BackendServers []string
 }
 
-// LoadConfig loads configuration from environment variables or defaults.
 func LoadConfig() *Config {
+	return &Config{
+		Addr:           loadAddr(),
+		BackendServers: loadBackends(),
+	}
+}
+
+func loadAddr() string {
 	addr := os.Getenv("LB_ADDR")
 	if addr == "" {
 		addr = ":8080"
 	}
-	return &Config{Addr: addr}
+	return addr
+}
+
+func loadBackends() []string {
+	backendsEnv := os.Getenv("LB_BACKENDS")
+	var backends []string
+	if backendsEnv != "" {
+		for _, b := range strings.Split(backendsEnv, ",") {
+			trimmed := strings.TrimSpace(b)
+			if trimmed != "" {
+				backends = append(backends, trimmed)
+			}
+		}
+	}
+	return backends
 }
