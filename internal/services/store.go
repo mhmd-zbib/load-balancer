@@ -24,7 +24,7 @@ func (s InstanceStatus) String() string {
 type Instance struct {
 	Address   string
 	Status    InstanceStatus
-	ReqCount  int
+	ReqCount  int32
 	FailCount int
 }
 
