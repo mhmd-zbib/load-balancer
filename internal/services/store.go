@@ -22,9 +22,10 @@ func (s InstanceStatus) String() string {
 }
 
 type Instance struct {
-	Address  string
-	Status   InstanceStatus
-	ReqCount int
+	Address   string
+	Status    InstanceStatus
+	ReqCount  int
+	FailCount int
 }
 
 type Service struct {
@@ -41,12 +42,13 @@ var ServiceStore = struct {
 // SetService sets the instances for a service (replaces all instances).
 func SetService(name string, addresses []string) {
 	ServiceStore.Lock()
-	defer ServiceStore.Unlock()
 	instances := make([]*Instance, 0, len(addresses))
 	for _, addr := range addresses {
 		instances = append(instances, &Instance{Address: addr, Status: StatusUp, ReqCount: 0})
 	}
 	ServiceStore.m[name] = &Service{Name: name, Instances: instances}
+	ServiceStore.Unlock()
+	PingServiceNow(name)
 }
 
 // GetService gets the Service struct for a service.
