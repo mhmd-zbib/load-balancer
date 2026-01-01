@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# simulation: CLI tool to simulate load balancer features
+# Usage: ./simulation
+
+LB_ADDR="http://localhost:8080"
+
+SERVICES=(books cars users)
+INSTANCES=("localhost:9001" "localhost:9002" "localhost:9003")
+
+# Start dummy backend servers on ports 9001, 9002, 9003
+function start_dummy_servers() {
+  for port in 9001 9002 9003; do
+    (
+      go run ./dummy/dummy_server.go "$port" &
+    )
+    echo "Started Go dummy backend on port $port"
+  done
+  sleep 1
+}
+
+function register_services() {
+  echo "Registering services and instances..."
+  for svc in "${SERVICES[@]}"; do
+    # Build JSON array from INSTANCES (no jq)
+    json_instances="[\"${INSTANCES[0]}\",\"${INSTANCES[1]}\",\"${INSTANCES[2]}\"]"
+    curl -s -X POST "$LB_ADDR/services/$svc" -H 'Content-Type: application/json' -d "$json_instances" > /dev/null
+    echo "Registered $svc with 3 instances."
+  done
+}
+
+function test_load_balancing() {
+  echo "Testing load balancing for /route/books..."
+  for i in {1..10}; do
+    resp=$(curl -s "$LB_ADDR/route/books")
+    echo "Response $i: $resp"
+    sleep 0.2
+  done
+}
+
+function test_rate_limiting() {
+  echo "Testing rate limiting for /route/books..."
+  count=0
+  while true; do
+    resp=$(curl -s -w "%{http_code}" -o /tmp/resp.txt "$LB_ADDR/route/books")
+    code=$(tail -c 3 <<< "$resp")
+    ((count++))
+    if [[ "$code" == "429" ]]; then
+      echo "Blocked by rate limiter after $count requests."
+      cat /tmp/resp.txt
+      break
+    else
+      echo "Request $count: $(cat /tmp/resp.txt)"
+    fi
+    sleep 0.1
+  done
+}
+
+function show_menu() {
+  echo "\n==== Load Balancer Simulation ===="
+  echo "1) Test Load Balancing"
+  echo "2) Test Rate Limiting"
+  echo "3) Exit"
+  echo -n "Choose an option: "
+}
+
+
+start_dummy_servers
+register_services
+
+while true; do
+  show_menu
+  read -r opt
+  case $opt in
+    1) test_load_balancing ;;
+    2) test_rate_limiting ;;
+    3) echo "Exiting."; kill $SERVER_PID; exit 0 ;;
+    *) echo "Invalid option." ;;
+  esac
+done

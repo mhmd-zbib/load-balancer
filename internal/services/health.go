@@ -33,6 +33,18 @@ func pingAllServices() {
 			go pingAndUpdateInstance(svc.Name, inst)
 		}
 	}
+	go logAllInstanceStatuses()
+}
+
+func logAllInstanceStatuses() {
+	time.Sleep(500 * time.Millisecond)
+	ServiceStore.RLock()
+	defer ServiceStore.RUnlock()
+	for _, svc := range ServiceStore.m {
+		for _, inst := range svc.Instances {
+			log.Printf("[HEALTH] %s (%s) status: %s, latency: %dms, failCount: %d", svc.Name, inst.Address, inst.Status, inst.PingLatency, inst.FailCount)
+		}
+	}
 }
 
 func pingAndUpdateInstance(serviceName string, inst *Instance) {

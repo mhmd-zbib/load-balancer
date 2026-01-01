@@ -1,6 +1,9 @@
 package services
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 type InstanceStatus int
 
@@ -41,6 +44,7 @@ var ServiceStore = struct {
 
 // SetService replaces all instances for a service.
 func SetService(name string, addresses []string) {
+	log.Printf("[STORE] Setting service '%s' with instances: %v", name, addresses)
 	ServiceStore.Lock()
 	instances := make([]*Instance, 0, len(addresses))
 	for _, addr := range addresses {
