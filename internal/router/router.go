@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 )
 
+// RouteHandler handles routing requests to healthy service instances.
 func RouteHandler(w http.ResponseWriter, r *http.Request) {
 	serviceName, err := extractServiceName(r)
 	if err != nil {
@@ -26,7 +27,6 @@ func RouteHandler(w http.ResponseWriter, r *http.Request) {
 	writeServiceResponse(w, resp)
 }
 
-// tryInstances attempts to forward the request to each instance in order, returning the first successful response.
 func tryInstances(instances []*services.Instance) (*http.Response, error) {
 	var lastErr error
 	for _, inst := range instances {

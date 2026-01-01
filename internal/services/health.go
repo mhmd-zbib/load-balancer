@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// StartHealthChecker starts the health checking routine for all services.
 func StartHealthChecker(ctx context.Context) {
 	log.Println("[HEALTH] Health checker started (interval: 5s)")
 	ticker := time.NewTicker(5 * time.Second)
@@ -24,7 +25,6 @@ func StartHealthChecker(ctx context.Context) {
 	}
 }
 
-// pingAllServices checks all instances in the store and updates their status.
 func pingAllServices() {
 	ServiceStore.RLock()
 	defer ServiceStore.RUnlock()
@@ -35,18 +35,17 @@ func pingAllServices() {
 	}
 }
 
-// pingAndUpdateInstance pings an instance and updates its status.
-// Instance is defined in store.go in the same package.
-// If you see errors, ensure both files are in the same package and compiled together.
 func pingAndUpdateInstance(serviceName string, inst *Instance) {
 	const failureThreshold = 3
+	start := time.Now()
 	status, err := checkInstanceHealth(inst.Address)
+	latency := time.Since(start).Milliseconds()
 	ServiceStore.Lock()
-	defer ServiceStore.Unlock()
+	inst.PingLatency = latency
 	updateInstanceStatus(serviceName, inst, status, err, failureThreshold)
+	ServiceStore.Unlock()
 }
 
-// checkInstanceHealth pings the instance and returns the status code and error.
 func checkInstanceHealth(address string) (int, error) {
 	client := http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Get("http://" + address + "/health")
@@ -57,7 +56,6 @@ func checkInstanceHealth(address string) (int, error) {
 	return resp.StatusCode, nil
 }
 
-// updateInstanceStatus updates the instance's status and logs as needed.
 func updateInstanceStatus(serviceName string, inst *Instance, status int, err error, failureThreshold int) {
 	if err != nil || status < 200 || status >= 300 {
 		handleInstanceFailure(serviceName, inst, err, status, failureThreshold)
@@ -89,6 +87,7 @@ func handleInstanceSuccess(serviceName string, inst *Instance) {
 	inst.FailCount = 0
 }
 
+// PingServiceNow triggers an immediate health check for a service.
 func PingServiceNow(serviceName string) {
 	ServiceStore.RLock()
 	svc := ServiceStore.m[serviceName]

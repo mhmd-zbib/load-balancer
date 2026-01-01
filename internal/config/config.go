@@ -8,6 +8,7 @@ type Config struct {
 	Addr string
 }
 
+// LoadConfig loads the configuration for the load balancer.
 func LoadConfig() *Config {
 	return &Config{
 		Addr: loadAddr(),

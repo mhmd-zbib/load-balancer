@@ -22,10 +22,11 @@ func (s InstanceStatus) String() string {
 }
 
 type Instance struct {
-	Address   string
-	Status    InstanceStatus
-	ReqCount  int32
-	FailCount int
+	Address     string
+	Status      InstanceStatus
+	ReqCount    int32
+	FailCount   int
+	PingLatency int64
 }
 
 type Service struct {
@@ -33,13 +34,12 @@ type Service struct {
 	Instances []*Instance
 }
 
-// ServiceStore holds the mapping of service names to their Service struct.
 var ServiceStore = struct {
 	m map[string]*Service
 	sync.RWMutex
 }{m: make(map[string]*Service)}
 
-// SetService sets the instances for a service (replaces all instances).
+// SetService replaces all instances for a service.
 func SetService(name string, addresses []string) {
 	ServiceStore.Lock()
 	instances := make([]*Instance, 0, len(addresses))
@@ -51,14 +51,14 @@ func SetService(name string, addresses []string) {
 	PingServiceNow(name)
 }
 
-// GetService gets the Service struct for a service.
+// GetService retrieves the Service struct for a service.
 func GetService(name string) *Service {
 	ServiceStore.RLock()
 	defer ServiceStore.RUnlock()
 	return ServiceStore.m[name]
 }
 
-// DeleteService removes a service.
+// DeleteService removes a service from the store.
 func DeleteService(name string) {
 	ServiceStore.Lock()
 	defer ServiceStore.Unlock()
@@ -71,7 +71,6 @@ func ListServices() map[string]*Service {
 	defer ServiceStore.RUnlock()
 	copy := make(map[string]*Service)
 	for k, v := range ServiceStore.m {
-		// Deep copy not strictly needed for read-only listing
 		copy[k] = v
 	}
 	return copy

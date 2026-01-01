@@ -8,6 +8,7 @@ import (
 	"log"
 )
 
+// main starts the load balancer server and health checker.
 func main() {
 	cfg := config.LoadConfig()
 	var srv server.Server = &server.HTTPServer{Addr: cfg.Addr}

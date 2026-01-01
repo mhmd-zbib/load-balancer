@@ -2,6 +2,7 @@ package router
 
 import "load_balancer/internal/services"
 
+// SelectInstance returns healthy instances of a service sorted by load.
 func SelectInstance(serviceName string) []*services.Instance {
 	svc := getService(serviceName)
 	if svc == nil {
@@ -42,5 +43,3 @@ func sortInstancesByLoad(instances []*services.Instance) {
 		}
 	}
 }
-
-// ...existing code...

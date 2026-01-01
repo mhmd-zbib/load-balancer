@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+// ServicesListHandler handles requests to list all services.
+// ServicesListHandler handles requests to list all services.
 func ServicesListHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -16,53 +18,15 @@ func ServicesListHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(svcs)
 }
 
+// RegisterServiceRoutes registers HTTP routes for service management.
+// RegisterServiceRoutes registers HTTP routes for service management.
 func RegisterServiceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/services", ServicesListHandler)
 	mux.HandleFunc("/services/", ServiceHandler)
-	mux.HandleFunc("/route/", RouteHandler)
-}
-// RouteHandler forwards the request to a healthy instance of the requested service.
-func RouteHandler(w http.ResponseWriter, r *http.Request) {
-       serviceName := r.URL.Path[len("/route/"):]
-       if serviceName == "" {
-	       http.Error(w, "Service name required", http.StatusBadRequest)
-	       return
-       }
-       svc := GetService(serviceName)
-       if svc == nil || len(svc.Instances) == 0 {
-	       http.Error(w, "Service not found or has no instances", http.StatusNotFound)
-	       return
-       }
-       // Pick the first healthy instance (no selection logic yet)
-       var target *Instance
-       for _, inst := range svc.Instances {
-	       if inst.Status == StatusUp {
-		       target = inst
-		       break
-	       }
-       }
-       if target == nil {
-	       http.Error(w, "No healthy instances available", http.StatusServiceUnavailable)
-	       return
-       }
-       // Forward the request (simple GET proxy for now)
-       resp, err := http.Get("http://" + target.Address)
-       if err != nil {
-	       http.Error(w, "Error forwarding request: "+err.Error(), http.StatusBadGateway)
-	       return
-       }
-       defer resp.Body.Close()
-       w.WriteHeader(resp.StatusCode)
-       // Copy response body
-       body, err := ioutil.ReadAll(resp.Body)
-       if err != nil {
-	       http.Error(w, "Error reading response", http.StatusInternalServerError)
-	       return
-       }
-       w.Write(body)
-}
 }
 
+// ServiceHandler handles requests for a specific service.
+// ServiceHandler handles requests for a specific service.
 func ServiceHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Path[len("/services/"):]
 	if name == "" {
