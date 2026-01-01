@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 )
 
-// RouteHandler handles routing requests to healthy service instances.
 func RouteHandler(w http.ResponseWriter, r *http.Request) {
 	serviceName, err := extractServiceName(r)
 	if err != nil {
