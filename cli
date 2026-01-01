@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+
+set -e 
+
+SCRIPTS_DIR="./scripts"
+
+if [ -z "$1" ]; then
+    echo "Usage: $0 <command>"
+    echo "Available scripts:"
+    ls "$SCRIPTS_DIR"
+    exit 1
+fi
+
+SCRIPT_NAME="$1"
+SCRIPT_PATH="$SCRIPTS_DIR/$SCRIPT_NAME"
+
+if [ ! -f "$SCRIPT_PATH" ]; then
+    echo "Error: Script '$SCRIPT_NAME' not found in '$SCRIPTS_DIR'."
+    exit 1
+fi
+
+shift
+
+bash "$SCRIPT_PATH" "$@"

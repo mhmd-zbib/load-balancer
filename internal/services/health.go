@@ -40,33 +40,53 @@ func pingAllServices() {
 // If you see errors, ensure both files are in the same package and compiled together.
 func pingAndUpdateInstance(serviceName string, inst *Instance) {
 	const failureThreshold = 3
-	client := http.Client{Timeout: 2 * time.Second}
-	resp, err := client.Get("http://" + inst.Address + "/health")
+	status, err := checkInstanceHealth(inst.Address)
 	ServiceStore.Lock()
 	defer ServiceStore.Unlock()
-	if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		inst.FailCount++
-		if inst.FailCount >= failureThreshold {
-			if inst.Status != StatusDown {
-				log.Printf("[HEALTH] %s (%s) is DOWN (failures: %d)", serviceName, inst.Address, inst.FailCount)
-			}
-			inst.Status = StatusDown
-		}
-		if err != nil {
-			log.Printf("[HEALTH] %s (%s) health check error: %v", serviceName, inst.Address, err)
-		} else {
-			log.Printf("[HEALTH] %s (%s) health check failed: status %d", serviceName, inst.Address, resp.StatusCode)
-		}
+	updateInstanceStatus(serviceName, inst, status, err, failureThreshold)
+}
+
+// checkInstanceHealth pings the instance and returns the status code and error.
+func checkInstanceHealth(address string) (int, error) {
+	client := http.Client{Timeout: 2 * time.Second}
+	resp, err := client.Get("http://" + address + "/health")
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode, nil
+}
+
+// updateInstanceStatus updates the instance's status and logs as needed.
+func updateInstanceStatus(serviceName string, inst *Instance, status int, err error, failureThreshold int) {
+	if err != nil || status < 200 || status >= 300 {
+		handleInstanceFailure(serviceName, inst, err, status, failureThreshold)
 	} else {
-		if inst.Status != StatusUp {
-			log.Printf("[HEALTH] %s (%s) is UP", serviceName, inst.Address)
+		handleInstanceSuccess(serviceName, inst)
+	}
+}
+
+func handleInstanceFailure(serviceName string, inst *Instance, err error, status int, failureThreshold int) {
+	inst.FailCount++
+	if inst.FailCount >= failureThreshold {
+		if inst.Status != StatusDown {
+			log.Printf("[HEALTH] %s (%s) is DOWN (failures: %d)", serviceName, inst.Address, inst.FailCount)
 		}
-		inst.Status = StatusUp
-		inst.FailCount = 0
+		inst.Status = StatusDown
 	}
-	if resp != nil {
-		resp.Body.Close()
+	if err != nil {
+		log.Printf("[HEALTH] %s (%s) health check error: %v", serviceName, inst.Address, err)
+	} else {
+		log.Printf("[HEALTH] %s (%s) health check failed: status %d", serviceName, inst.Address, status)
 	}
+}
+
+func handleInstanceSuccess(serviceName string, inst *Instance) {
+	if inst.Status != StatusUp {
+		log.Printf("[HEALTH] %s (%s) is UP", serviceName, inst.Address)
+	}
+	inst.Status = StatusUp
+	inst.FailCount = 0
 }
 
 func PingServiceNow(serviceName string) {
