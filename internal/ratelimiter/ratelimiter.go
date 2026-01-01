@@ -60,7 +60,6 @@ func checkAndConsumeToken(eData *endpointData) bool {
 	return true
 }
 
-// RateLimitMiddleware is a stub middleware for demonstration. Replace with your implementation.
 func RateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		clientIP := r.RemoteAddr
