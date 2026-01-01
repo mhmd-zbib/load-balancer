@@ -37,7 +37,8 @@ func getHealthyInstances(svc *services.Service) []*services.Instance {
 func sortInstancesByLoad(instances []*services.Instance) {
 	for i := 0; i < len(instances)-1; i++ {
 		for j := i + 1; j < len(instances); j++ {
-			if instances[j].ReqCount < instances[i].ReqCount {
+			if instances[j].ReqCount < instances[i].ReqCount ||
+				(instances[j].ReqCount == instances[i].ReqCount && instances[j].PingLatency < instances[i].PingLatency) {
 				instances[i], instances[j] = instances[j], instances[i]
 			}
 		}
