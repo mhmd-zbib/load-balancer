@@ -7,7 +7,6 @@ import (
 )
 
 // ServicesListHandler handles requests to list all services.
-// ServicesListHandler handles requests to list all services.
 func ServicesListHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -19,13 +18,11 @@ func ServicesListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterServiceRoutes registers HTTP routes for service management.
-// RegisterServiceRoutes registers HTTP routes for service management.
 func RegisterServiceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/services", ServicesListHandler)
 	mux.HandleFunc("/services/", ServiceHandler)
 }
 
-// ServiceHandler handles requests for a specific service.
 // ServiceHandler handles requests for a specific service.
 func ServiceHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Path[len("/services/"):]
