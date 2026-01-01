@@ -1,19 +1,19 @@
 package config
 
 import (
+	"encoding/json"
 	"os"
-	"strings"
 )
 
 type Config struct {
-	Addr           string
-	BackendServers []string
+	Addr     string
+	Services map[string][]string // service name -> list of instance addresses
 }
 
 func LoadConfig() *Config {
 	return &Config{
-		Addr:           loadAddr(),
-		BackendServers: loadBackends(),
+		Addr:     loadAddr(),
+		Services: loadServices(),
 	}
 }
 
@@ -25,16 +25,12 @@ func loadAddr() string {
 	return addr
 }
 
-func loadBackends() []string {
-	backendsEnv := os.Getenv("LB_BACKENDS")
-	var backends []string
-	if backendsEnv != "" {
-		for _, b := range strings.Split(backendsEnv, ",") {
-			trimmed := strings.TrimSpace(b)
-			if trimmed != "" {
-				backends = append(backends, trimmed)
-			}
-		}
+func loadServices() map[string][]string {
+	servicesEnv := os.Getenv("LB_SERVICES")
+	services := make(map[string][]string)
+	if servicesEnv != "" {
+		// Expecting JSON: {"service1": ["host1:port", "host2:port"], "service2": ["host3:port"]}
+		_ = json.Unmarshal([]byte(servicesEnv), &services)
 	}
-	return backends
+	return services
 }

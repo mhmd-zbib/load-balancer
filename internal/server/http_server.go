@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"load_balancer/internal/services"
 	"net/http"
 )
 
@@ -10,8 +11,14 @@ type HTTPServer struct {
 }
 
 func (h *HTTPServer) Start() error {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Load Balancer HTTP Server Running!")
 	})
-	return http.ListenAndServe(h.Addr, handler)
+
+	mux.HandleFunc("/services", services.ServicesListHandler)
+	mux.HandleFunc("/services/", services.ServiceHandler)
+
+	return http.ListenAndServe(h.Addr, mux)
 }
